@@ -4,6 +4,7 @@ A Next.js app that tracks expenses, sets budgets, and uses AI to auto-categorize
 spending and generate monthly insights.
 
 ## Tech Stack
+
 - Next.js 15 (App Router) + TypeScript
 - Tailwind CSS
 - Prisma + PostgreSQL
@@ -46,4 +47,5 @@ Open [http://localhost:3000](http://localhost:3000).
 - [ ] Deploy on Vercel
 
 ## License
+
 MIT
