@@ -1,7 +1,7 @@
 const summaryCards = [
-  { label: "Total Spent This Month", value: "Rs 0", accent: "text-white" },
-  { label: "Remaining Budget", value: "Rs 0", accent: "text-emerald-400" },
-  { label: "Transactions", value: "0", accent: "text-white" },
+  { label: 'Total Spent This Month', value: 'Rs 0', accent: 'text-white' },
+  { label: 'Remaining Budget', value: 'Rs 0', accent: 'text-emerald-400' },
+  { label: 'Transactions', value: '0', accent: 'text-white' },
 ];
 
 export default function DashboardOverview() {
