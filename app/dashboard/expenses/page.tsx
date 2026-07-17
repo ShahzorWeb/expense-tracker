@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil, Check, X } from "lucide-react";
 import InputField from "@/components/InputField";
 
 interface Expense {
@@ -19,6 +19,13 @@ export default function ExpensesPage() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Edit mode state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editAmount, setEditAmount] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [saving, setSaving] = useState(false);
 
   async function loadExpenses() {
     const res = await fetch("/api/expenses");
@@ -50,6 +57,36 @@ export default function ExpensesPage() {
 
   async function handleDelete(id: string) {
     await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+    loadExpenses();
+  }
+
+  function startEdit(exp: Expense) {
+    setEditingId(exp.id);
+    setEditAmount(String(exp.amount));
+    setEditDescription(exp.description);
+    setEditCategory(exp.category?.name || "");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditAmount("");
+    setEditDescription("");
+    setEditCategory("");
+  }
+
+  async function handleSaveEdit(id: string) {
+    setSaving(true);
+    await fetch(`/api/expenses/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: editAmount,
+        description: editDescription,
+        category: editCategory,
+      }),
+    });
+    setSaving(false);
+    cancelEdit();
     loadExpenses();
   }
 
@@ -110,27 +147,80 @@ export default function ExpensesPage() {
           </p>
         ) : (
           <div className="divide-y divide-neutral-800">
-            {expenses.map((exp) => (
-              <div key={exp.id} className="flex items-center justify-between px-5 py-3">
-                <div>
-                  <p className="text-sm text-white">{exp.description}</p>
-                  <p className="text-xs text-neutral-500">
-                    {exp.category?.name || "Uncategorized"} ·{" "}
-                    {new Date(exp.date).toLocaleDateString()}
-                  </p>
+            {expenses.map((exp) =>
+              editingId === exp.id ? (
+                <div
+                  key={exp.id}
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 px-5 py-3 bg-neutral-800/50"
+                >
+                  <input
+                    type="number"
+                    value={editAmount}
+                    onChange={(e) => setEditAmount(e.target.value)}
+                    className="w-full sm:w-24 rounded-lg border border-neutral-700 bg-neutral-900 px-2 py-1.5 text-sm text-white"
+                    placeholder="Amount"
+                  />
+                  <input
+                    type="text"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    className="w-full sm:flex-1 rounded-lg border border-neutral-700 bg-neutral-900 px-2 py-1.5 text-sm text-white"
+                    placeholder="Description"
+                  />
+                  <input
+                    type="text"
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full sm:w-32 rounded-lg border border-neutral-700 bg-neutral-900 px-2 py-1.5 text-sm text-white"
+                    placeholder="Category"
+                  />
+                  <div className="flex items-center gap-3 justify-end">
+                    <button
+                      onClick={() => handleSaveEdit(exp.id)}
+                      disabled={saving}
+                      aria-label="Save expense"
+                      className="text-emerald-400 hover:text-emerald-300 disabled:opacity-60"
+                    >
+                      <Check size={18} />
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      aria-label="Cancel edit"
+                      className="text-neutral-500 hover:text-red-400"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <p className="text-sm font-medium text-white">Rs {exp.amount.toFixed(0)}</p>
-                  <button
-                    onClick={() => handleDelete(exp.id)}
-                    aria-label="Delete expense"
-                    className="text-neutral-500 hover:text-red-400"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+              ) : (
+                <div key={exp.id} className="flex items-center justify-between px-5 py-3">
+                  <div>
+                    <p className="text-sm text-white">{exp.description}</p>
+                    <p className="text-xs text-neutral-500">
+                      {exp.category?.name || "Uncategorized"} ·{" "}
+                      {new Date(exp.date).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <p className="text-sm font-medium text-white">Rs {exp.amount.toFixed(0)}</p>
+                    <button
+                      onClick={() => startEdit(exp)}
+                      aria-label="Edit expense"
+                      className="text-neutral-500 hover:text-emerald-400"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(exp.id)}
+                      aria-label="Delete expense"
+                      className="text-neutral-500 hover:text-red-400"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
         )}
       </div>
