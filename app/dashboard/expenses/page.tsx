@@ -117,6 +117,17 @@ export default function ExpensesPage() {
           placeholder="e.g. Groceries"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          onBlur={async () => {
+            if (description && !category) {
+              const res = await fetch("/api/categorize", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ description }),
+              });
+              const data = await res.json();
+              if (data.category) setCategory(data.category);
+            }
+          }}
           required
         />
         <InputField
