@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { LayoutDashboard, Receipt, PieChart, Wallet, Settings } from "lucide-react";
+import { LayoutDashboard, Receipt, PieChart, Wallet, Settings, Tag } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/expenses", label: "Expenses", icon: Receipt },
   { href: "/dashboard/budgets", label: "Budgets", icon: Wallet },
   { href: "/dashboard/insights", label: "Insights", icon: PieChart },
+  { href: "/dashboard/categories", label: "Categories", icon: Tag },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
