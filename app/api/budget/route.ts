@@ -10,16 +10,19 @@ export async function GET() {
   }
 
   const now = new Date();
-  const budget = await prisma.budget.findFirst({
-    where: {
-      userId,
-      categoryId: null,
-      month: now.getMonth() + 1,
-      year: now.getFullYear(),
-    },
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+
+  const overall = await prisma.budget.findFirst({
+    where: { userId, categoryId: null, month, year },
   });
 
-  return NextResponse.json(budget);
+  const categoryBudgets = await prisma.budget.findMany({
+    where: { userId, categoryId: { not: null }, month, year },
+    include: { category: true },
+  });
+
+  return NextResponse.json({ overall, categoryBudgets });
 }
 
 export async function POST(req: Request) {
@@ -29,16 +32,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { amount } = await req.json();
+  const { amount, category } = await req.json();
   const now = new Date();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+
+  let categoryId: string | null = null;
+  if (category) {
+    const categoryRecord = await prisma.category.upsert({
+      where: { userId_name: { userId, name: category } },
+      update: {},
+      create: { userId, name: category },
+    });
+    categoryId = categoryRecord.id;
+  }
 
   const existing = await prisma.budget.findFirst({
-    where: {
-      userId,
-      categoryId: null,
-      month: now.getMonth() + 1,
-      year: now.getFullYear(),
-    },
+    where: { userId, categoryId, month, year },
   });
 
   let budget;
@@ -49,12 +59,7 @@ export async function POST(req: Request) {
     });
   } else {
     budget = await prisma.budget.create({
-      data: {
-        amount: parseFloat(amount),
-        month: now.getMonth() + 1,
-        year: now.getFullYear(),
-        userId,
-      },
+      data: { amount: parseFloat(amount), month, year, userId, categoryId },
     });
   }
 

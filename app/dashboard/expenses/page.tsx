@@ -97,6 +97,14 @@ export default function ExpensesPage() {
         <p className="text-sm text-neutral-400">Add and manage your expenses.</p>
       </div>
 
+       <a
+        href="/api/expenses/export"
+        download
+        className="self-start rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition"
+      >
+        Export CSV
+      </a>
+
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 sm:grid-cols-4 gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4"
