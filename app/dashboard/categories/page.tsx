@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -14,7 +14,7 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
 
   async function load() {
-    const res = await fetch("/api/categories");
+    const res = await fetch('/api/categories');
     const data = await res.json();
     setCategories(data);
     setLoading(false);
@@ -25,7 +25,7 @@ export default function CategoriesPage() {
   }, []);
 
   async function handleDelete(id: string) {
-    await fetch(`/api/categories/${id}`, { method: "DELETE" });
+    await fetch(`/api/categories/${id}`, { method: 'DELETE' });
     load();
   }
 
@@ -48,11 +48,15 @@ export default function CategoriesPage() {
         ) : (
           <div className="divide-y divide-neutral-800">
             {categories.map((c) => (
-              <div key={c.id} className="flex items-center justify-between px-5 py-3">
+              <div
+                key={c.id}
+                className="flex items-center justify-between px-5 py-3"
+              >
                 <div>
                   <p className="text-sm text-white">{c.name}</p>
                   <p className="text-xs text-neutral-500">
-                    {c._count.expenses} expense{c._count.expenses !== 1 ? "s" : ""}
+                    {c._count.expenses} expense
+                    {c._count.expenses !== 1 ? 's' : ''}
                   </p>
                 </div>
                 <button

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
-import { Trash2, Pencil, Check, X } from "lucide-react";
+import { Trash2, Pencil, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 import InputField from "@/components/InputField";
+import DateInput from "@/components/DateInput";
 
 interface Expense {
   id: string;
@@ -12,15 +13,24 @@ interface Expense {
   category?: { name: string } | null;
 }
 
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
 export default function ExpensesPage() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+
+  const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [expenseDate, setExpenseDate] = useState<Date>(new Date());
   const [submitting, setSubmitting] = useState(false);
 
-  // Edit mode state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -30,13 +40,39 @@ export default function ExpensesPage() {
   async function loadExpenses() {
     const res = await fetch("/api/expenses");
     const data = await res.json();
-    setExpenses(data);
+    setAllExpenses(data);
     setLoading(false);
   }
 
   useEffect(() => {
     loadExpenses();
   }, []);
+
+  function goToPreviousMonth() {
+    if (selectedMonth === 1) {
+      setSelectedMonth(12);
+      setSelectedYear((y) => y - 1);
+    } else {
+      setSelectedMonth((m) => m - 1);
+    }
+  }
+
+  function goToNextMonth() {
+    if (selectedMonth === 12) {
+      setSelectedMonth(1);
+      setSelectedYear((y) => y + 1);
+    } else {
+      setSelectedMonth((m) => m + 1);
+    }
+  }
+
+  const expenses = allExpenses.filter((e) => {
+    const d = new Date(e.date);
+    return d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear;
+  });
+
+  const isCurrentMonth =
+    selectedMonth === now.getMonth() + 1 && selectedYear === now.getFullYear();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -45,12 +81,18 @@ export default function ExpensesPage() {
     await fetch("/api/expenses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount, description, category }),
+      body: JSON.stringify({
+        amount,
+        description,
+        category,
+        date: expenseDate.toISOString(),
+      }),
     });
 
     setAmount("");
     setDescription("");
     setCategory("");
+    setExpenseDate(new Date());
     setSubmitting(false);
     loadExpenses();
   }
@@ -97,7 +139,7 @@ export default function ExpensesPage() {
         <p className="text-sm text-neutral-400">Add and manage your expenses.</p>
       </div>
 
-       <a
+<a
         href="/api/expenses/export"
         download
         className="self-start rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition"
@@ -105,9 +147,34 @@ export default function ExpensesPage() {
         Export CSV
       </a>
 
+      <div className="flex items-center justify-center gap-4 rounded-2xl border border-neutral-800 bg-neutral-900 p-3">
+        <button
+          onClick={goToPreviousMonth}
+          aria-label="Previous month"
+          className="text-neutral-400 hover:text-emerald-400"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <p className="text-sm font-semibold text-white min-w-[160px] text-center">
+          {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
+          {isCurrentMonth && (
+            <span className="ml-2 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-400">
+              Current
+            </span>
+          )}
+        </p>
+        <button
+          onClick={goToNextMonth}
+          aria-label="Next month"
+          className="text-neutral-400 hover:text-emerald-400"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+
       <form
         onSubmit={handleSubmit}
-        className="grid grid-cols-1 sm:grid-cols-4 gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4"
       >
         <InputField
           label="Amount"
@@ -146,6 +213,7 @@ export default function ExpensesPage() {
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         />
+        <DateInput label="Date" value={expenseDate} onChange={setExpenseDate} />
         <div className="flex items-end">
           <button
             type="submit"
@@ -158,11 +226,19 @@ export default function ExpensesPage() {
       </form>
 
       <div className="rounded-2xl border border-neutral-800 bg-neutral-900 overflow-hidden">
+        <div className="px-5 py-3 border-b border-neutral-800 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-white">
+            {MONTH_NAMES[selectedMonth - 1]} {selectedYear} Expenses
+          </h2>
+          <p className="text-xs text-neutral-500">
+            {expenses.length} transaction{expenses.length !== 1 ? "s" : ""}
+          </p>
+        </div>
         {loading ? (
           <p className="p-6 text-center text-sm text-neutral-500">Loading...</p>
         ) : expenses.length === 0 ? (
           <p className="p-6 text-center text-sm text-neutral-500">
-            No expenses yet — add your first one above.
+            No expenses for {MONTH_NAMES[selectedMonth - 1]} {selectedYear}.
           </p>
         ) : (
           <div className="divide-y divide-neutral-800">

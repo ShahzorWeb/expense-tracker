@@ -2,16 +2,17 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await auth();
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(req.url);
   const now = new Date();
-  const month = now.getMonth() + 1;
-  const year = now.getFullYear();
+  const month = parseInt(searchParams.get("month") || String(now.getMonth() + 1));
+  const year = parseInt(searchParams.get("year") || String(now.getFullYear()));
 
   const overall = await prisma.budget.findFirst({
     where: { userId, categoryId: null, month, year },
@@ -32,10 +33,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { amount, category } = await req.json();
+  const { amount, category, month: bodyMonth, year: bodyYear } = await req.json();
   const now = new Date();
-  const month = now.getMonth() + 1;
-  const year = now.getFullYear();
+  const month = bodyMonth ?? now.getMonth() + 1;
+  const year = bodyYear ?? now.getFullYear();
 
   let categoryId: string | null = null;
   if (category) {
